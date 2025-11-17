@@ -206,6 +206,16 @@ def main():
         ingreso_regular = linea_mayor.calcularIngresosRegulares()
         print(f"Línea {linea_mayor.color} tiene {ingreso_regular} Bs en tarifa regular")
 
+    print("\n=== Detalle por línea ===")
+    for linea in teleferico.lineas:
+        print(f"Línea {linea.color}:")
+        print(f"  - Personas en fila: {len(linea.filaPersonas)}")
+        print(f"  - Cabinas: {linea.cantidadCabinas}")
+        print(f"  - Ingreso total: {linea.calcularIngresos()} Bs")
+        print(f"  - Ingreso regular: {linea.calcularIngresosRegulares()} Bs")
+        
+        for cabina in linea.cabinas:
+            print(f"  - Cabina {cabina.nroCabina}: {len(cabina.personasAbordo)} personas, {cabina.calcularPesoTotal()} kg")
+
 if __name__ == "__main__":
     main()
-
