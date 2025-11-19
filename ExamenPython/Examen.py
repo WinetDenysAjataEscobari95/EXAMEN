@@ -3,9 +3,7 @@ class Persona:
         self.nombre = nombre
         self.edad = edad
         self.pesoPersona = peso
-    
-    def agregarCabina(self, nroCab):
-        pass
+
 
 class Cabina:
     def __init__(self, nroCabina):
@@ -16,17 +14,11 @@ class Cabina:
         self.personasAbordo.append(persona)
     
     def calcularPesoTotal(self):
-        peso_total = 0
-        for persona in self.personasAbordo:
-            peso_total += persona.pesoPersona
-        return peso_total
+        return sum(p.pesoPersona for p in self.personasAbordo)
     
     def verificarReglas(self):
-        if len(self.personasAbordo) > 10:
-            return False
-        if self.calcularPesoTotal() > 850:
-            return False
-        return True
+        return len(self.personasAbordo) <= 10 and self.calcularPesoTotal() <= 850
+
 
 class Linea:
     def __init__(self, color):
@@ -34,7 +26,6 @@ class Linea:
         self.filaPersonas = []
         self.cabinas = []
         self.cantidadCabinas = 0
-        self.ingresos = 0
     
     def agregarPersona(self, persona):
         self.filaPersonas.append(persona)
@@ -51,6 +42,7 @@ class Linea:
                 return cabina
         return None
     
+    # INCISO A
     def agregarPrimeraPersonaCabina(self, nroX):
         cabina = self.encontrarCabina(nroX)
         if cabina is None:
@@ -67,38 +59,42 @@ class Linea:
         if len(cabina.personasAbordo) < 10 and (peso_actual + persona.pesoPersona) <= 850:
             cabina.agregarPersona(persona)
             self.filaPersonas.pop(0)
-            
-            if persona.edad <= 25 or persona.edad >= 60:
-                self.ingresos += 1.5
-            else:
-                self.ingresos += 3.0
-                
             return True
         else:
             print("No se puede agregar persona: límite excedido")
             return False
     
+    # INCISO B
     def verificarReglasLinea(self):
         for cabina in self.cabinas:
             if not cabina.verificarReglas():
                 return False
         return True
     
+    # INCISO C
     def calcularIngresos(self):
-        return self.ingresos
-    
-    def calcularIngresosRegulares(self):
-        ingresos_regulares = 0
+        ingreso = 0
         for cabina in self.cabinas:
             for persona in cabina.personasAbordo:
-                if persona.edad > 25 and persona.edad < 60:
-                    ingresos_regulares += 3.0
-        return ingresos_regulares
+                if persona.edad <= 25 or persona.edad >= 60:
+                    ingreso += 1.5
+                else:
+                    ingreso += 3
+        return ingreso
+    
+    # INCISO D (solo tarifa regular)
+    def calcularIngresosRegulares(self):
+        ingreso = 0
+        for cabina in self.cabinas:
+            for persona in cabina.personasAbordo:
+                if 25 < persona.edad < 60:
+                    ingreso += 3
+        return ingreso
+
 
 class MiTeleferico:
     def __init__(self):
         self.lineas = []
-        self.cantidadIngresos = 0
     
     def agregarLinea(self, linea):
         self.lineas.append(linea)
@@ -114,8 +110,8 @@ class MiTeleferico:
     def agregarCabina(self, linea_color):
         for linea in self.lineas:
             if linea.color == linea_color:
-                nro_cabina = linea.cantidadCabinas + 1
-                return linea.agregarCabina(nro_cabina)
+                nro = linea.cantidadCabinas + 1
+                return linea.agregarCabina(nro)
         print(f"No existe la línea {linea_color}")
         return None
     
@@ -127,32 +123,16 @@ class MiTeleferico:
         return False
     
     def verificarTodasCabinas(self):
-        for linea in self.lineas:
-            if not linea.verificarReglasLinea():
-                return False
-        return True
+        return all(linea.verificarReglasLinea() for linea in self.lineas)
     
     def calcularIngresoTotal(self):
-        total = 0
-        for linea in self.lineas:
-            total += linea.calcularIngresos()
-        self.cantidadIngresos = total
-        return total
+        return sum(linea.calcularIngresos() for linea in self.lineas)
     
     def lineaMasIngresoRegular(self):
         if not self.lineas:
             return None
-        
-        linea_mayor = self.lineas[0]
-        mayor_ingreso = linea_mayor.calcularIngresosRegulares()
-        
-        for linea in self.lineas[1:]:
-            ingreso_actual = linea.calcularIngresosRegulares()
-            if ingreso_actual > mayor_ingreso:
-                mayor_ingreso = ingreso_actual
-                linea_mayor = linea
-        
-        return linea_mayor
+        return max(self.lineas, key=lambda l: l.calcularIngresosRegulares())
+
 
 def main():
     teleferico = MiTeleferico()
@@ -165,7 +145,7 @@ def main():
     teleferico.agregarLinea(linea_roja)
     teleferico.agregarLinea(linea_verde)
     
-    for i in range(3):
+    for _ in range(3):
         teleferico.agregarCabina("Amarillo")
         teleferico.agregarCabina("Rojo")
         teleferico.agregarCabina("Verde")
@@ -191,31 +171,16 @@ def main():
         teleferico.agregarPrimeraPersonaCabina(i, "Verde")
     
     print("\n=== Verificación de reglas ===")
-    if teleferico.verificarTodasCabinas():
-        print("Todas las cabinas cumplen las reglas")
-    else:
-        print("Algunas cabinas no cumplen las reglas")
+    print("Todas las cabinas cumplen las reglas" if teleferico.verificarTodasCabinas() else "Hay cabinas que NO cumplen")
     
-    print("\n=== Cálculo de ingresos ===")
-    ingreso_total = teleferico.calcularIngresoTotal()
-    print(f"Ingreso total: {ingreso_total} Bs")
+    print("\n=== Ingreso total ===")
+    print(teleferico.calcularIngresoTotal(), "Bs")
     
     print("\n=== Línea con más ingreso regular ===")
-    linea_mayor = teleferico.lineaMasIngresoRegular()
-    if linea_mayor:
-        ingreso_regular = linea_mayor.calcularIngresosRegulares()
-        print(f"Línea {linea_mayor.color} tiene {ingreso_regular} Bs en tarifa regular")
+    linea = teleferico.lineaMasIngresoRegular()
+    if linea:
+        print(f"Línea {linea.color} con {linea.calcularIngresosRegulares()} Bs")
 
-    print("\n=== Detalle por línea ===")
-    for linea in teleferico.lineas:
-        print(f"Línea {linea.color}:")
-        print(f"  - Personas en fila: {len(linea.filaPersonas)}")
-        print(f"  - Cabinas: {linea.cantidadCabinas}")
-        print(f"  - Ingreso total: {linea.calcularIngresos()} Bs")
-        print(f"  - Ingreso regular: {linea.calcularIngresosRegulares()} Bs")
-        
-        for cabina in linea.cabinas:
-            print(f"  - Cabina {cabina.nroCabina}: {len(cabina.personasAbordo)} personas, {cabina.calcularPesoTotal()} kg")
 
 if __name__ == "__main__":
     main()
